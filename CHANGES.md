@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0 (unreleased)
+
+Contributors to this version: Joseph Siddons (@jtsiddons).
+
+### Bug Fixes
+
+* Ensure that duration is in milliseconds in `utils.get_month_midpoint` following change to default
+  in `polars` (#23).
+* Correct documentation for `grid.assign_to_grid` and check that `fill_value` is valid (#22).
+
 ## 1.0.0 (2025-08-22)
 
 Contributors to this version: Joseph Siddons (@josidd), Steven Chan (@stchan), Richard Cornes
