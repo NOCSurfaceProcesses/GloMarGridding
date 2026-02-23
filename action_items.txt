@@ -1,0 +1,4 @@
+Tasks needed:
+1) AR1 forecast a Kriging result
+2) Save full Kriging covariance instead of just diagonal values
+3) Inverse variance weighted averaging
