@@ -86,23 +86,26 @@ ignore = [
   "D400", # ends-in-period
   "D401", # non-imperative-mood
   "D105", # missing docstring in magic method
+  "DOC501", # missing raise section in docstring
+  "DOC502", # extraneous raise section in docstring
 ]
 preview = true
 select = [
   "C90",  # mccabe-complexity
   "D",    # docstrings
+  "DOC",  # docstring missing or extraneous components
   "E",    # pycodestyle errors
   "F",    # pyflakes
   "ICN",  # Flake8 Import Conventions
   "N802", # invalid-function-name
-  "S",    # bandit
+  "S",    # bandit (security)
   "W",    # pycodestyle warnings
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"docs/*.py" = ["D100", "D101", "D102", "D103"]
-"test/**/*test*.py" = ["D100", "D101", "D102", "D103", "N802", "S101", "S311"]
-"notebooks/*.ipynb" = ["D100", "D101", "D102", "D103", "N802", "S101", "S311"]
+"docs/*.py" = ["DOC", "D100", "D101", "D102", "D103"]
+"test/**/*test*.py" = ["DOC", "D100", "D101", "D102", "D103", "N802", "S101", "S311"]
+"notebooks/*.ipynb" = ["DOC", "D100", "D101", "D102", "D103", "N802", "S101", "S311"]
 
 [tool.ruff.format]
 quote-style = "double"            # Like Black, use double quotes for strings.

@@ -704,35 +704,6 @@ class EllipseBuilder:
 
         return params
 
-    def find_nearest_xy_index_in_cov_matrix(
-        self,
-        lonlat: list[float],
-        use_full: bool = False,
-    ) -> tuple[int, np.ndarray]:
-        """
-        Find the nearest column/row index of the covariance
-        that corresponds to a specific lat lon
-        """
-        lon, lat, *_ = lonlat
-
-        a = self.xy_full if use_full else self.xy_masked
-        idx = int(((a[:, 0] - lon) ** 2.0 + (a[:, 1] - lat) ** 2.0).argmin())
-        return idx, a[idx, :]
-
-    def _xy_2_xy_full_index(self, xy_point: int) -> int:
-        """
-        Given xy index in that corresponding to a latlon
-        in the covariance (masked value np.ma.MaskedArray compressed),
-        what is its index with masked values (i.e. ndarray flatten)
-        """
-        return int(
-            np.argwhere(
-                np.all(
-                    (self.xy_full - self.xy_masked[xy_point, :]) == 0, axis=1
-                )
-            )[0]
-        )
-
     def __str__(self):
         return str(self.__class__)
         # return str(self.__class__) + ": " + str(self.__dict__)

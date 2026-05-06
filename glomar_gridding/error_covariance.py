@@ -339,16 +339,16 @@ def _vgm_model(
 
     Parameters
     ----------
-    sill : float | numpy.ndarray
+    psill : float | numpy.ndarray
         Sill of the variogram where it will flatten out. This value is the
         variance.
     space_range : float | numpy.ndarray
         Spatial length scale [km]
     time_range : float | numpy.ndarray
         Temporal scale [days]
-    dist_space : numpy.ndarray
+    space_dist : numpy.ndarray
         Distance delta between observations [km]
-    dist_time : numpy.ndarray
+    time_dist : numpy.ndarray
         Time delta between observations [us]
 
     Returns

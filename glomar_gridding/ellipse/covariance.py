@@ -492,10 +492,10 @@ class EllipseCovarianceBuilder:
         2. Karspeck et al. 2012 [Karspeck]_ Equation 17
         """
         dy, dx = self.disp_fn(
-            self.lat_grid_compressed_rad[i_s],
-            self.lon_grid_compressed_rad[i_s],
-            self.lat_grid_compressed_rad[j_s],
-            self.lon_grid_compressed_rad[j_s],
+            self.lat_grid_compressed_rad[i_s],  # type: ignore
+            self.lon_grid_compressed_rad[i_s],  # type: ignore
+            self.lat_grid_compressed_rad[j_s],  # type: ignore
+            self.lon_grid_compressed_rad[j_s],  # type: ignore
         )
         c_ij = (
             self.stdev_compressed[i_s] * self.stdev_compressed[j_s]
@@ -609,7 +609,24 @@ def _sigma_rot_func_multi(
     Ly: np.ndarray,
     theta: np.ndarray | None,
 ) -> np.ndarray:
-    """Flattened Sigma matrices for a list of Lx, Ly, theta triplets."""
+    """
+    Flattened Sigma matrices for a list of Lx, Ly, theta triplets.
+
+    Parameters
+    ----------
+    Lx : numpy.ndarray
+        Long length scale of the ellipse
+    Ly : numpy.ndarray
+        Short length scale of the ellipse
+    theta : numpy.ndarray
+        Rotation angle of the ellipses
+
+    Returns
+    -------
+    numpy.ndarray
+        A vertical stack of flattened 2 x 2 matrices corresponding to each of
+        the ellipses.
+    """
     Lx2 = np.power(Lx, 2)
     Ly2 = np.power(Ly, 2)
 
@@ -641,15 +658,41 @@ def _sigma_rot_func_multi(
 
 def _det_22_single(
     mat: np.ndarray,
-) -> np.ndarray:
-    """Determinant of a flattened 2 x 2 matrix"""
+) -> float:
+    """
+    Determinant of a flattened 2 x 2 matrix
+
+    Parameters
+    ----------
+    mat : numpy.ndarray
+        2 x 2 matrix
+
+    Returns
+    -------
+    float
+        The determinant of a single matrix
+    """
     return mat[0] * mat[3] - mat[1] * mat[2]
 
 
 def _det_22_multi(
     mats: np.ndarray,
 ) -> np.ndarray:
-    """Determinants of an array of flattened 2 x 2 matrices"""
+    """
+    Compute determinants of an array of flattened 2 x 2 matrices.
+
+    Parameters
+    ----------
+    mats : numpy.ndarray
+        An array of flattened 2 x 2 matrices where the first column is (0, 0),
+        the second column is (0, 1), the third (1, 0), and the fourth is (1, 1)
+        for each of the matrices
+
+    Returns
+    -------
+    numpy.ndarray
+        A vector of determinants for each of the input flattened 2 x 2 matrices.
+    """
     return mats[:, 0] * mats[:, 3] - mats[:, 1] * mats[:, 2]
 
 
@@ -659,7 +702,25 @@ def _haversine_single(
     lat1: float,
     lon1: float,
 ) -> float:
-    """Haversine distance between a pair of points"""
+    """
+    Haversine distance between a pair of points
+
+    Parameters
+    ----------
+    lat0 : float
+        The latitude of the first position.
+    lon0 : float
+        The longitude of the first position.
+    lat1 : float
+        The latitude of the second position.
+    lon1 : float
+        The longitude of the second position.
+
+    Returns
+    -------
+    distance : float
+        Haversine distance between the input positions, in km.
+    """
     dlon = lon0 - lon1
     dlat = lat0 - lat1
 
@@ -681,7 +742,25 @@ def _haversine_multi(
     lat1: np.ndarray,
     lon1: np.ndarray,
 ) -> np.ndarray:
-    """Haversine distance for a list of pairs of points"""
+    """
+    Haversine distance between for a list of position pairs.
+
+    Parameters
+    ----------
+    lat0 : numpy.ndarray
+        The latitude of the first positions.
+    lon0 : numpy.ndarray
+        The longitude of the first positions.
+    lat1 : numpy.ndarray
+        The latitude of the second positions.
+    lon1 : numpy.ndarray
+        The longitude of the second positions.
+
+    Returns
+    -------
+    distance : numpy.ndarray
+        Haversine distances between the input positions, in km.
+    """
     dlon = lon0 - lon1
     dlat = lat0 - lat1
 
@@ -700,7 +779,29 @@ def _mod_mo_disp_single(
     lat1: float,
     lon1: float,
 ) -> tuple[float, float]:
-    """Modified Met Office displacements between two points"""
+    """
+    Modified Met Office displacements between two points.
+    Displacements are computed using a rugby-ball shape approximation, with
+    0 horizontal displacement at the poles.
+
+    Parameters
+    ----------
+    lat0 : float
+        The latitude of the first position.
+    lon0 : float
+        The longitude of the first position.
+    lat1 : float
+        The latitude of the second position.
+    lon1 : float
+        The longitude of the second position.
+
+    Returns
+    -------
+    dy : float
+        Vertical displacement between the input positions, in km.
+    dx : float
+        Horizontal displacement between the input positions, in km.
+    """
     dy = lat0 - lat1
     dx = lon0 - lon1
     dx = dx - TWO_PI if dx > np.pi else dx
@@ -718,7 +819,28 @@ def _mo_disp_single(
     lat1: float,
     lon1: float,
 ) -> tuple[float, float]:
-    """Met Office displacements between two points"""
+    """
+    Met Office displacements between two points. Displacements
+    are computed using a cylindrical approximation.
+
+    Parameters
+    ----------
+    lat0 : float
+        The latitude of the first position.
+    lon0 : float
+        The longitude of the first position.
+    lat1 : float
+        The latitude of the second position.
+    lon1 : float
+        The longitude of the second position.
+
+    Returns
+    -------
+    dy : float
+        Vertical displacement between the input positions, in km.
+    dx : float
+        Horizontal displacement between the input positions, in km.
+    """
     dy = lat0 - lat1
     dx = lon0 - lon1
     dx = dx - TWO_PI if dx > np.pi else dx
@@ -733,7 +855,29 @@ def _mod_mo_disp_multi(
     lat1: np.ndarray,
     lon1: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Modified Met Office displacements between a list of pairs of points"""
+    """
+    Modified Met Office displacements between a list of pairs of points.
+    Displacements are computed using a rugby-ball shape approximation, with
+    0 horizontal displacement at the poles.
+
+    Parameters
+    ----------
+    lat0 : numpy.ndarray
+        The latitude of the first positions.
+    lon0 : numpy.ndarray
+        The longitude of the first positions.
+    lat1 : numpy.ndarray
+        The latitude of the second positions.
+    lon1 : numpy.ndarray
+        The longitude of the second positions.
+
+    Returns
+    -------
+    dy : numpy.ndarray
+        Vertical displacement between the input positions, in km.
+    dx : numpy.ndarray
+        Horizontal displacement between the input positions, in km.
+    """
     dy = lat0 - lat1
     dx = lon0 - lon1
     dx[dx > np.pi] -= TWO_PI
@@ -751,7 +895,28 @@ def _mo_disp_multi(
     lat1: np.ndarray,
     lon1: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Met Office displacements between a list of pairs of points"""
+    """
+    Met Office displacements between a list of pairs of points. Displacements
+    are computed using a cylindrical approximation.
+
+    Parameters
+    ----------
+    lat0 : numpy.ndarray
+        The latitude of the first positions.
+    lon0 : numpy.ndarray
+        The longitude of the first positions.
+    lat1 : numpy.ndarray
+        The latitude of the second positions.
+    lon1 : numpy.ndarray
+        The longitude of the second positions.
+
+    Returns
+    -------
+    dy : numpy.ndarray
+        Vertical displacement between the input positions, in km.
+    dx : numpy.ndarray
+        Horizontal displacement between the input positions, in km.
+    """
     dy = lat0 - lat1
     dx = lon0 - lon1
     dx[dx > np.pi] -= TWO_PI

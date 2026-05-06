@@ -2,7 +2,21 @@
 
 ## 1.2.0 (Unreleased)
 
-Contributors to this version: Joseph Siddons (@jtsiddons), Richard Cornes (@rcornes).
+Contributors to this version: Joseph Siddons (@jtsiddons), Steven Chan (@SCChan21), Richard Cornes
+(@rcornes).
+
+### Breaking changes
+
+* Renamed `glomar_gridding.distances.tau_dist_from_frame` to
+  `glomar_gridding.distances.tau_variogram_from_frame` to better reflect function behaviour (#99).
+
+### New features and enhancements
+
+* Added option to return full uncertainty matrix from `Kriging` classes (#101).
+
+### Internal changes
+
+* Added "DOC" ruleset for ruff linting, and amended docstrings to align with rules (#99).
 
 ### Bug fixes
 
@@ -11,6 +25,8 @@ Contributors to this version: Joseph Siddons (@jtsiddons), Richard Cornes (@rcor
 
 ### Documentation
 
+* Standardised docstrings following ruff "DOC" ruleset, improved documentation for Mahanaolobis
+  distance functions and `covariance_tools` module (#99).
 * Update citation details, add `__bibtex__` for convenience (#118).
 
 ## 1.1.0 (2026-01-12)

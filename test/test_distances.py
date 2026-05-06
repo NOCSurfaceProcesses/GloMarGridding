@@ -14,7 +14,7 @@ from glomar_gridding.distances import (
     haversine_distance_from_frame,
     mahal_dist_func,
     sigma_rot_func,
-    tau_dist_from_frame,
+    tau_variogram_from_frame,
 )
 
 
@@ -120,6 +120,6 @@ def test_mahalanobis():
     )
     df = df.join(df2, on=["grid_lat", "grid_lon"], how="left")
 
-    tau = tau_dist_from_frame(df)
+    tau = tau_variogram_from_frame(df)
 
     assert tau.shape == (N, N)

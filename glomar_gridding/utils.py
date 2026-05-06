@@ -410,7 +410,19 @@ def get_pentad_range(centre_date: date) -> tuple[date, date]:
 
 
 def _get_logging_level(level: str) -> int:
-    """Get the numeric value of a logging level string"""
+    """
+    Get the numeric value of a logging level string.
+
+    Parameters
+    ----------
+    level : str
+        The name of the logging level.
+
+    Returns
+    -------
+    int
+        The integer value corresponding the logging level.
+    """
     match level.lower():
         case "debug":
             level_i = 10
@@ -539,7 +551,19 @@ def km_to_deg(km: float) -> float:
 
 
 def is_iter(val: Any) -> bool:
-    """Determine if a value is an iterable"""
+    """
+    Determine if a value is an iterable. Tested using the iter function.
+
+    Parameters
+    ----------
+    val : Any
+        Value to test.
+
+    Returns
+    -------
+    bool
+        Indicating if input is an iterable.
+    """
     try:
         iter(val)
         return True
@@ -596,7 +620,7 @@ def uncompress_masked(
     if np.sum(not_mask) != len(compressed_array):
         raise ValueError("Length of compressed_array does not align with mask")
 
-    dtype = dtype or compressed_array.dtype
+    dtype = dtype or type(compressed_array.dtype)
 
     uncompressed = np.empty_like(mask, dtype=dtype)
     np.place(uncompressed, not_mask, compressed_array)
@@ -619,11 +643,16 @@ def cor_2_cov(
     Parameters
     ----------
     cor : numpy.ndarray
-        Correlation Matrix
+        Correlation matrix.
     variances : numpy.ndarray
         Variances to scale the correlation matrix.
     rounding : int
-        round the values of the output
+        round the values of the output.
+
+    Returns
+    -------
+    cov : numpy.ndarray:
+        Covariance matrix.
     """
     stdevs = np.sqrt(variances)
     normalisation = np.outer(stdevs, stdevs)
@@ -649,6 +678,11 @@ def cov_2_cor(
         Covariance matrix
     rounding : int
         round the values of the output
+
+    Returns
+    -------
+    cor : numpy.ndarray
+        The Correlation matrix.
     """
     stdevs = np.sqrt(np.diag(cov))
     normalisation = np.outer(stdevs, stdevs)
@@ -698,6 +732,20 @@ def batched(iterable: Iterable, n: int, *, strict: bool = False):
     """
     Implementation of itertools.batched for use if python version is < 3.12.
 
+    Parameters
+    ----------
+    iterable : Iterable
+        The iterable to batch.
+    n : int
+        The number of values to yield in each batch.
+    strict : bool
+        If strict is True then an error is raised if the last batch is not of
+        size n.
+
+    Yields
+    ------
+    A batch of size n from the iterable.
+
     Examples
     --------
     >>> list(batched("ABCDEFG", 3))
@@ -720,6 +768,17 @@ def get_month_midpoint(dates: pl.Series) -> pl.Series:
     end of the month.
 
     For example, the midpoint of January 1990 is 1990-01-16 12:00.
+
+    Parameters
+    ----------
+    dates : polars.Series
+        A Series of datetimes.
+
+    Returns
+    -------
+    midpoints : polars.Series
+        A Series containing datetime values corresponding to the midpoint of the
+        month of the original datetime values.
     """
     if not dates.dtype.is_temporal():
         raise TypeError("Input is not a datetime series")
@@ -728,11 +787,11 @@ def get_month_midpoint(dates: pl.Series) -> pl.Series:
         dates.dt.month_end().dt.date().dt.offset_by("1d")
         - dates.dt.month_start().dt.date()
     ).dt.cast_time_unit("us")
-    dates = dates.dt.month_start() + (month_len.cast(pl.Int64) / 2).cast(
+    midpoints = dates.dt.month_start() + (month_len.cast(pl.Int64) / 2).cast(
         pl.Duration("us")
     )
 
-    return dates
+    return midpoints
 
 
 def sizeof_fmt(num: float, suffix="B") -> str:

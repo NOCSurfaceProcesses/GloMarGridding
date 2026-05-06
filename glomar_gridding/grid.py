@@ -603,7 +603,7 @@ class Grid:
         """Get the mapping between mask and grid indices"""
         df = pl.DataFrame({"grid_idx": self.grid_idx})
         if self.is_masked and hasattr(self, "mask"):
-            df = df.remove(self.mask.flatten().mask)
+            df = df.remove(self.mask.flatten().mask)  # type: ignore
         return df.with_row_index(name="mask_idx")
 
     def select_bounds(
@@ -618,11 +618,8 @@ class Grid:
         bounds : list[tuple[float, float]]
             A list of tuples containing the lower and upper bounds for each
             dimension.
-        variables : list[str]
-            Names of the dimensions (the order must match the bounds).
         """
         self.grid = select_bounds(self.grid, bounds, self.coord_names)
-        return None
 
     def map_observations(
         self,
@@ -896,8 +893,6 @@ class Grid:
             name="dist",
         )
 
-        return None
-
     def set_distance_matrix(
         self,
         distance_matrix: np.ndarray | xr.DataArray,
@@ -914,7 +909,6 @@ class Grid:
             The distance matrix for the full (unmasked) grid.
         """
         self.dist = self.prep_covariance(distance_matrix)
-        return None
 
     def covariance_matrix(
         self,
@@ -965,7 +959,6 @@ class Grid:
             self.variogram.fit(self.dist),
             variance=self.variogram.psill,
         )
-        return None
 
     def set_covariance(
         self,
@@ -983,7 +976,6 @@ class Grid:
             The covariance matrix for the full (unmasked) grid.
         """
         self.cov = self.prep_covariance(covariance_matrix)
-        return None
 
     def _cross_coords(self) -> xr.Coordinates:
         """
@@ -1026,7 +1018,7 @@ class Grid:
         coord_df = self.coord_df
 
         if self.is_masked and hasattr(self, "mask"):
-            coord_df = coord_df.remove(self.mask.flatten().mask)
+            coord_df = coord_df.remove(self.mask.flatten().mask)  # type: ignore
 
         n = coord_df.height
         cross_coords: dict[str, Any] = {
@@ -1067,15 +1059,12 @@ class Grid:
             raise ValueError("Mask must be a masked array or array of booleans")
 
         self.masked_grid_idx = self.index_map.get_column("grid_idx")
-        return None
 
     def remove_mask(self) -> NoneType:
         """Remove the mask"""
         self.is_masked = False
         if hasattr(self, "mask"):
             delattr(self, "mask")
-
-        return None
 
     def prep_covariance(
         self,
@@ -1089,6 +1078,11 @@ class Grid:
         ----------
         covariance_matrix : numpy.ndarray | xarray.DataArray
             The covariance matrix.
+
+        Returns
+        -------
+        numpy.ndarray
+            The covariance matrix subset to the mask
         """
         if covariance_matrix.shape[0] == self.index_map.height:
             print(

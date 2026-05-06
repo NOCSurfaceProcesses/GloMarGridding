@@ -102,10 +102,10 @@ def join_climatology_by_doy(
             pl.col(clim_doy).dt.ordinal_day().name.keep()
         )
 
-    obs_lat = obs_df.get_column(lat_col)
+    obs_lat = obs_df.get_column(lat_col).to_numpy()
     _, lat_vals = find_nearest(climatology_365.coords[clim_lat].values, obs_lat)
 
-    obs_lon = obs_df.get_column(lon_col)
+    obs_lon = obs_df.get_column(lon_col).to_numpy()
     _, lon_vals = find_nearest(climatology_365.coords[clim_lon].values, obs_lon)
 
     obs_df = obs_df.with_columns(

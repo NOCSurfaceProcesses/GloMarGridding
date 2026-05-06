@@ -17,14 +17,15 @@ Functions for calculating distances or distance-based covariance components.
 
 Some functions can be used for computing pairwise-distances, for example via
 squareform. Some functions can be used as a distance function for
-glomar_gridding.error_covariance.dist_weights, accounting for the distance
-component to an error covariance matrix.
+:py:func:`glomar_gridding.error_covariance.dist_weights`, accounting for the
+Variogram distance component to an error covariance matrix.
 
 Functions for computing covariance using Matern Tau by Steven Chan (@stchan).
 """
 
 from collections.abc import Callable
-from math import cos, sin
+from copy import copy
+from math import cos, degrees, sin
 from typing import get_args
 
 import geopandas
@@ -42,7 +43,17 @@ def rot_mat(angle: float) -> np.ndarray:
     """
     Compute a 2d rotation matrix from an angle.
 
-    The input angle must be in radians
+    The input angle must be in radians.
+
+    Parameters
+    ----------
+    angle : float
+        The angle in radians.
+
+    Returns
+    -------
+    numpy.ndarray
+        A rotation matrix defined by the input angle.
     """
     c_ang = cos(angle)
     s_ang = sin(angle)
@@ -50,7 +61,19 @@ def rot_mat(angle: float) -> np.ndarray:
 
 
 def inv_2d(mat: np.ndarray) -> np.ndarray:
-    """Compute the inverse of a 2 x 2 matrix"""
+    """
+    Compute the inverse of a 2 x 2 matrix.
+
+    Parameters
+    ----------
+    mat : numpy.ndarray
+        The 2 x 2 matrix to invert.
+
+    Returns
+    -------
+    inv : numpy.ndarray
+        The inverse matrix.
+    """
     det_denom = mat[0, 0] * mat[1, 1] - mat[0, 1] * mat[1, 0]
     if det_denom == 0:
         raise ValueError("Denominator is 0")
@@ -58,7 +81,6 @@ def inv_2d(mat: np.ndarray) -> np.ndarray:
     return inv / det_denom
 
 
-# NOTE: This is a Variogram result
 def haversine_gaussian(
     df: pl.DataFrame,
     R: float = 6371.0,
@@ -66,7 +88,11 @@ def haversine_gaussian(
     s: float = 0.6,
 ) -> np.ndarray:
     """
-    Gaussian Haversine Model
+    Gaussian Haversine Model. Compute the Gaussian variogram of the haversine
+    distances from positions in a DataFrame.
+
+    Can be used as an input function for
+    :py:func:`glomar_gridding.error_covariance.dist_weight`.
 
     Parameters
     ----------
@@ -282,31 +308,33 @@ def calculate_distance_matrix(
 
 def _latlon2ne(
     latlons: np.ndarray,
-    latlons_in_rads: bool = False,
-    latlon0: tuple[float, float] = (0.0, 180.0),
+    centre: tuple[float, float] = (0.0, 180.0),
+    as_radians: bool = False,
 ) -> np.ndarray:
     """
     Compute Northing and Easting from Latitude and Longitude
 
-    latlons -- a (N, 2) (numpy) array of latlons
-    By GIS and netcdf as well as sklearn convention
-    [X, 0] = lat
-    [X, 1] = lon
-    aka [LAT, LON] [Y,X] NOT [X,Y]!!!!!
+    Parameters
+    ----------
+    latlons : numpy.ndarray
+        An array containing rows of latitude and longitude pairs. Shape (N, 2).
+    centre : tuple[float, float]
+        tuple containing the latitude and longitude of the central point
+        Transverse Mercator for reprojecting to Northing East
+    as_radians : bool
+        Boolean indicating whether latlons are in radians.
 
-    latlons_in_rads -- boolean stating if latlons are in radians
-    (default False -- input are in degrees)
-
-    latlon0 - a (lat, lon) in degree tuple stating
-    the central point of Transverse Mercator for reprojecting to
-    Northing East
-
-    returns a (N, 2) numpy array of Northing Easting [km]
+    Returns
+    -------
+    ne : numpy.ndarray
+        The Northing and Easting values in a numpy.ndarray. Shape (N, 2).
     """
-    if latlons_in_rads:
+    if as_radians:
         latlons2 = np.rad2deg(latlons)
+        centre2 = tuple(degrees(_) for _ in centre)
     else:
         latlons2 = latlons.copy()
+        centre2 = copy(centre)
     df0 = pd.DataFrame({"lat": latlons2[:, 0], "lon": latlons2[:, 1]})
     df0["geometry"] = df0.apply(lambda row: Point([row.lon, row.lat]), axis=1)
     df0 = geopandas.GeoDataFrame(df0, geometry="geometry", crs="EPSG:4326")
@@ -315,9 +343,9 @@ def _latlon2ne(
     # Recommended to be centered on the central point
     # of the grid box
     # Large distortions will occur if you use a single value for
-    # latlon0 for the entire globe
-    proj4 = "+proj=tmerc +lat_0=" + str(latlon0[0])
-    proj4 += " +lon_0=" + str(latlon0[1])
+    # centre for the entire globe
+    proj4 = "+proj=tmerc +lat_0=" + str(centre2[0])
+    proj4 += " +lon_0=" + str(centre2[1])
     proj4 += " +k=0.9996 +x_0=0 +y_0=0 +units=km"
     df1: geopandas.GeoDataFrame = geopandas.GeoDataFrame(
         df0,
@@ -327,16 +355,26 @@ def _latlon2ne(
     df1.to_crs(proj4, inplace=True)
     df1["easting"] = df1.geometry.x
     df1["northing"] = df1.geometry.y
-    pos = df1[["northing", "easting"]].to_numpy()
-    return pos
+    ne = df1[["northing", "easting"]].to_numpy()
+    return ne
 
 
 def _paired_vector_dist(yx: np.ndarray) -> np.ndarray:
     """
-    Input:
-    (N, 2) array
-    [X, 0] = lat or northing
-    [X, 1] = lon or easting
+    Get a paired vector distance.
+
+    Parameters
+    ----------
+    yx : numpy.ndarray
+        The positions:
+
+        - (N, 2) array
+        - [X, 0] = lat or northing
+        - [X, 1] = lon or easting
+
+    Returns
+    -------
+    numpy.ndarray
     """
     return yx[:, None, :] - yx
 
@@ -347,19 +385,27 @@ def sigma_rot_func(
     theta: float | None,
 ) -> np.ndarray:
     """
-    Equation 15 in Karspeck el al 2011 and Equation 6
-    in Paciorek and Schervish 2006,
-    assuming Sigma(Lx, Ly, theta) locally/moving-window invariant or
-    we have already taken the mean (Sigma overbar, PP06 3.1.1)
+    Compute sigma rotation matrix for an ellipse. Can be used as a normalisation
+    matrix for computing the Normalised Mahalanobis distance.
 
-    Lx, Ly - anistropic variogram length scales
-    theta - angle relative to lines of constant latitude
-    theta should be radians, and the fitting code outputs radians by default
+    Parameters
+    ----------
+    Lx : float
+        Length of the semi-major axis of the ellipse (km).
+    Ly : float
+        Length of the semi-minor axis of the ellipse (km).
+    theta : float
+        Angle of the ellipse in radians.
 
     Returns
     -------
-    sigma : np.ndarray
+    sigma : numpy.ndarray
         2 x 2 matrix
+
+    References
+    ----------
+    Equation 15 from Karspeck et al. 2011 [Karspeck]_, and Equation 6 from
+    Paciorek and Schervish 2006 [PaciorekSchervish]_.
     """
     L = np.diag([Lx**2.0, Ly**2.0])
     if theta is None:
@@ -373,20 +419,52 @@ def tau_dist(
     dE: float,
     dN: float,
     sigma: np.ndarray,
-) -> np.ndarray:
+) -> float:
     """
-    Eq.15 in Karspeck paper
-    but it is standard formulation to the
-    Mahalanobis distance
-    https://en.wikipedia.org/wiki/Mahalanobis_distance
-    10.1002/qj.900
+    Normalised Mahalanobis distance between two points. The normalisation value
+    is the matrix 'sigma' which could be the sigma rotation matrix associated
+    with an ellipse.
+
+    Parameters
+    ----------
+    dE : float
+        Easting of a position.
+    dN : float
+        Northing of a position.
+    sigma : numpy.ndarray
+        2 x 2 sigma rotation matrix, used for normalisation of the Mahalanobis
+        distance.
+
+    Returns
+    -------
+    float
+        Normalised Mahalanobis distance.
+
+    References
+    ----------
+    Equation 15 in Karspeck et al. 2011 [Karspeck]_
     """
     dx_vec = np.array([dE, dN])
-    return np.sqrt(dx_vec.T @ inv_2d(sigma) @ dx_vec)
+    return float(np.sqrt(dx_vec.T @ inv_2d(sigma) @ dx_vec))
 
 
 def _compute_tau_wrapper(dyx: np.ndarray, sigma: np.ndarray) -> np.ndarray:
-    """Wrapper function for computing tau"""
+    """
+    Wrapper function for computing tau/Normalised Mahalanobis distance for an
+    array of positions.
+
+    Parameters
+    ----------
+    dyx : numpy.ndarray
+        Array of Northing and Easting values.
+    sigma : numpy.ndarray
+        Sigma rotation matrix for an ellipse.
+
+    Returns
+    -------
+    tau : numpy.ndarray
+        Normalised Mahalanobis distances for all points.
+    """
     DE = dyx[:, :, 1]
     DN = dyx[:, :, 0]
 
@@ -397,19 +475,22 @@ def _compute_tau_wrapper(dyx: np.ndarray, sigma: np.ndarray) -> np.ndarray:
     return compute_tau_vectorised(DE, DN)
 
 
-def tau_dist_from_frame(df: pl.DataFrame) -> np.ndarray:
+def tau_variogram_from_frame(df: pl.DataFrame) -> np.ndarray:
     """
-    Compute the tau/Mahalanobis matrix for all records within a gridbox
+    Compute the Exponential variogram of the Normalised Mahalanobis distances
+    for all records within a gridbox provided as a DataFrame. The DataFrame must
+    contain the positions and ellipse parameters for a single gridbox.
 
-    Can be used as an input function for observations.dist_weight.
+    Can be used as an input function for
+    :py:func:`glomar_gridding.error_covariance.dist_weight`.
 
-    Eq.15 in Karspeck paper
-    but it is standard formulation to the
-    Mahalanobis distance
-    https://en.wikipedia.org/wiki/Mahalanobis_distance
-    10.1002/qj.900
+    Note: this returns is an Exponential Variogram result, so the exponential of
+    the negative Normalised Mahalanobis distance.
 
-    By Steven Chan - @stchan
+    .. math::
+        res = e^{-dist}
+
+    By Steven Chan - @stchan.
 
     Parameters
     ----------
@@ -417,13 +498,27 @@ def tau_dist_from_frame(df: pl.DataFrame) -> np.ndarray:
         The observational DataFrame, containing positional information for each
         observation ("lat", "lon"), gridbox specific positional information
         ("grid_lat", "grid_lon"), and ellipse length-scale parameters used for
-        computation of `sigma` ("grid_lx", "grid_ly", "grid_theta").
+        computation of `sigma` ("grid_lx", "grid_ly", "grid_theta"). The
+        required columns are:
+
+        - "lat": Actual latitude of the position.
+        - "lon": Actual longitude of the position.
+        - "grid_lat": latitude defining the gridbox.
+        - "grid_lon": longitude defining the gridbox.
+        - "grid_lx": The semi-major length-scale of the ellipse for the gridbox.
+        - "grid_ly": The semi-minor length-scale of the ellipse for the gridbox.
+        - "grid_theta": Rotation angle of the ellipse in radians, anti-clockwise
+          from East.
 
     Returns
     -------
     tau : numpy.matrix
         A matrix of dimension n x n where n is the number of rows in `df` and
-        is the tau/Mahalanobis distance.
+        is the exponential of the negative tau/Normalised Mahalanobis distance.
+
+    References
+    ----------
+    Equation 15 in Karspeck et al. 2011 [Karspeck]_.
     """
     required_cols = [
         "grid_lon",
@@ -438,7 +533,7 @@ def tau_dist_from_frame(df: pl.DataFrame) -> np.ndarray:
     # Get northing and easting
     lat0, lon0 = df.select(["grid_lat", "grid_lon"]).row(0)
     latlons = np.asarray(df.select(["lat", "lon"]).to_numpy())
-    ne = _latlon2ne(latlons, latlons_in_rads=False, latlon0=(lat0, lon0))
+    ne = _latlon2ne(latlons, as_radians=False, centre=(lat0, lon0))
     paired_dist = _paired_vector_dist(ne)
 
     # Get sigma
@@ -456,25 +551,34 @@ def mahal_dist_func(
     Ly: float,
     theta: float | None = None,
 ) -> np.ndarray:
-    """
-    Calculate tau from displacements, Lx, Ly, and theta (if it is known). For
-    an array of displacements, for a set of scalar ellipse parameters, Lx, Ly,
-    and theta.
+    r"""
+    Calculate Normalised Mahalanobis distance from an array of displacements,
+    and a set of ellipse parameters Lx, Ly, and theta (if it is known).
+
+    The displacements are related to traditional/Euclidean notation:
+
+    .. math::
+        \delta_x i + \delta_y j
 
     Parameters
     ----------
-    delta_x, delta_y : numpy.ndarray
-        displacement to remote point as in: (delta_x) i + (delta_y) j in old
-        school vector notation
-    Lx, Ly : float
-        Lx, Ly scale (km or degrees)
+    delta_x : numpy.ndarray
+        Horizontal displacement.
+    delta_y : numpy.ndarray
+        Vertical displacement.
+    Lx : float
+        Length of the semi-major axis of the ellipse (km).
+    Ly : float
+        Length of the semi-minor axis of the ellipse (km).
     theta : float | None
-        rotation angle in radians
+        Rotation angle in radians defined with 0 horizontal (East) increasing
+        anti-clockwise. If `None`, then it is assumed that the ellispe is a
+        non-rotated ellispe (equivalent to theta = 0).
 
     Returns
     -------
-    tau : float
-        Mahalanobis distance
+    tau : numpy.ndarray
+        Normalised Mahalanobis distance for each displacement.
     """
     # sigma is 2x2 matrix
     if theta is not None:

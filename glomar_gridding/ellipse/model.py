@@ -390,7 +390,23 @@ class EllipseModel:
         X: np.ndarray,
         y: np.ndarray,
     ) -> Callable[[list[float]], float]:
-        """Creates a function that can be fed into scipy.optimizer.minimize"""
+        """
+        Creates a function that can be fed into `scipy.optimize.minimize`
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            (Predictors) Displacements for the training data
+        y : numpy.ndarray
+            (Response) Correlation values for the training data
+
+        Returns
+        -------
+        f : Callable[[list[float]], float]
+            Negative log-likelihood function for the training data that takes a
+            set of parameters and returns a negative log-likelihood value. For
+            use in `scipy.optimize.minimize`.
+        """
 
         def f(params: list[float]) -> float:
             return self.negative_log_likelihood(
@@ -560,8 +576,33 @@ class EllipseModel:
         opt_method: str,
         tol: float | None = None,
         seed: int = 1234,
-    ) -> np.ndarray:
-        """Bootstrap refit the Matern parameters"""
+    ) -> list[float]:
+        """
+        Bootstrap refit the Matern parameters
+
+        Parameters
+        ----------
+        X : numpy.ndarray
+            (Predictors) Displacements for the training data.
+        y : numpy.ndarray
+            (Response) Correlation values for the training data.
+        guesses : list[float],
+            Initial values for the parameters.
+        bounds : list[tuple[float, ...]],
+            Bounds on the parameters.
+        opt_method : str,
+            Optimisation method.
+        tol : float | None = None,
+            Tolerance value for the optimiser.
+        seed : int = 1234,
+            Random seed to use for choosing the subset of the training data to
+            use for the bootstrap.
+
+        Returns
+        -------
+        params : list[float]
+            The parameters resulting from a single bootstrap of the optimiser.
+        """
         rng = np.random.RandomState(seed)
         len_obs = len(y)
         i_obs = np.arange(len_obs)

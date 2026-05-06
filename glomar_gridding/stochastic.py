@@ -428,7 +428,7 @@ def draw_from_cov(
     cov : numpy.ndarray
         not a xarray/iris cube! Some of our covariances are saved in numpy
         format and not netCDF files
-    n_draws : int
+    ndraws : int
         number of simulations, this is usually set to 1 except during
     unit testing
     sym_atol : float
