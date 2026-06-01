@@ -62,8 +62,12 @@ def weibull_2_normality_via_boxcox(
 
     Reference: https://doi.org/10.2307/2287172
 
-    .. math:: \hat{x} = \frac{x^{\lambda} - 1}{\lambda}
-    .. math:: \lambda \approx 0.2654 \times \text{shape}  \text{, if } x \sim \text{Weibull}(\text{shape}, \text{scale})
+    .. math::
+       \hat{x} = \frac{x^{\lambda} - 1}{\lambda}
+
+    .. math::
+       \lambda \approx 0.2654 \times \text{shape}
+       \text{, if } x \sim \text{Weibull}(\text{shape}, \text{scale})
 
     A variation of that method is proposed by Kulkarni and Powar 2011:
     https://doi.org/10.1155/2011/863274
