@@ -30,8 +30,9 @@ def box_cox_transformation(
     x: np.ndarray,
     ll: float) -> np.ndarray:
     r"""
-    Apply Box-Cox transformation to x for normality
-    ll depends on probability distribution of x.
+    Apply Box-Cox transformation to x
+    Transformation depends on `ll`
+    (usually called lambda, an invalid variable name in Python)
 
     .. math::
        \hat{x}=\begin{cases}
@@ -68,7 +69,7 @@ def weibull_2_normality(
     This is usually used for wind speeds.
 
     This is a specific case to the `box_cox_transformation` with
-    lambda being a specific value
+    ll being a specific value
 
     Reference: https://doi.org/10.2307/2287172
 
@@ -79,7 +80,7 @@ def weibull_2_normality(
        \lambda \approx 0.2654 \times \text{shape}
        \text{, if } x \sim \text{Weibull}(\text{shape}, \text{scale})
 
-    A variation of that is proposed by Kulkarni and Powar 2011:
+    A variation to that is proposed by Kulkarni and Powar 2011:
     https://doi.org/10.1155/2011/863274
 
     .. math::
