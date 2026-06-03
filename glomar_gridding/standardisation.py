@@ -1,11 +1,11 @@
-"""Normality transformation and standardisation variables"""
+"""Standardisation and normality transformation of variables"""
 
 import numpy as np
 
 
 def standardise_sample(x: np.ndarray) -> np.ndarray:
     """
-    Standardise 1D variable x
+    Basic standardisation of 1D variable
     (i.e. minus mean, divide by sigma)
     May need to be used with loop or np.vectorize or alike
     to apply to multidimensional dataset
@@ -29,8 +29,15 @@ def standardise_sample(x: np.ndarray) -> np.ndarray:
 def box_cox_transformation(
     x: np.ndarray,
     ll: float) -> np.ndarray:
-    """
-    Apply Box-Cox transformation to x
+    r"""
+    Apply Box-Cox transformation to x for normality
+    ll depends on probability distribution of x.
+
+    .. math::
+       \hat{x}=\begin{cases}
+          \frac{x^{\lambda} - 1}{\lambda} & \text{if } \lambda \neq 0 \\
+          \text{ln}(x) & \text{if } \lambda = 0 \\
+       \end{cases}
 
     Parameters
     ----------
@@ -51,14 +58,17 @@ def box_cox_transformation(
     return upstairs / downstairs
 
 
-def weibull_2_normality_via_boxcox(
+def weibull_2_normality(
     x: np.ndarray,
     c: float,
     use_kp11: bool = False,
 ):
     r"""
-    Box Cox transform to make Weibull-distributed
-    variable (usually windspeed for our purposes) to normality.
+    Box Cox transform to make Weibull-distributed variable to normality.
+    This is usually used for wind speeds.
+
+    This is a specific case to the `box_cox_transformation` with
+    lambda being a specific value
 
     Reference: https://doi.org/10.2307/2287172
 
@@ -69,8 +79,14 @@ def weibull_2_normality_via_boxcox(
        \lambda \approx 0.2654 \times \text{shape}
        \text{, if } x \sim \text{Weibull}(\text{shape}, \text{scale})
 
-    A variation of that method is proposed by Kulkarni and Powar 2011:
+    A variation of that is proposed by Kulkarni and Powar 2011:
     https://doi.org/10.1155/2011/863274
+
+    .. math::
+       \hat{x} = x^{\lambda}
+
+    .. math::
+       \lambda \approx 0.2776 \times \text{shape}
 
     Parameters
     ----------
