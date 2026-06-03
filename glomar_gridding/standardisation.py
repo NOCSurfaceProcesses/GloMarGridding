@@ -26,9 +26,7 @@ def standardise_sample(x: np.ndarray) -> np.ndarray:
     return x_hat
 
 
-def box_cox_transformation(
-    x: np.ndarray,
-    ll: float) -> np.ndarray:
+def box_cox_transformation(x: np.ndarray, ll: float) -> np.ndarray:
     r"""
     Apply Box-Cox transformation to x
     Transformation depends on `ll`
@@ -54,7 +52,7 @@ def box_cox_transformation(
     """
     if ll == 0:
         return np.log(x)
-    upstairs = (x ** ll) - 1
+    upstairs = (x**ll) - 1
     downstairs = ll
     return upstairs / downstairs
 
@@ -105,7 +103,7 @@ def weibull_2_normality(
     """
     if use_kp11:
         ll = 0.2776 * c
-        x_hat = x ** ll
+        x_hat = x**ll
         return x_hat
     ll = 0.2654 * c
     x_hat = box_cox_transformation(x, ll)
