@@ -53,4 +53,3 @@ def weibull_2_normality(
     lam = 0.2654 * c
     x_hat = stats.boxcox(x, lmbda=lam)
     return x_hat
-
