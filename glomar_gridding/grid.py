@@ -600,7 +600,7 @@ class Grid:
 
     @property
     def index_map(self) -> pl.DataFrame:
-        """Get the mapping between mask and grid indices"""
+        """The mapping between mask and grid indices"""
         df = pl.DataFrame({"grid_idx": self.grid_idx})
         if self.is_masked and hasattr(self, "mask"):
             df = df.remove(self.mask.flatten().mask)

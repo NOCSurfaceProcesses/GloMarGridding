@@ -18,6 +18,11 @@ Contributors to this version: Joseph Siddons (@jtsiddons), Richard Cornes (@rcor
 
 * Update citation details, add `__bibtex__` for convenience (#118).
 
+### Internal changes
+
+* Adds a `Makefile` (#144).
+* Build tool changed to `flit` (#144).
+
 ## 1.1.0 (2026-01-12)
 
 Contributors to this version: Joseph Siddons (@jtsiddons, @josidd), Steven Chan (@SCChan21), Richard

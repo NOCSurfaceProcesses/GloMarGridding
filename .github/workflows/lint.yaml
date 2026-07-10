@@ -1,4 +1,4 @@
-name: glomar_gridding Testing Suite
+name: glomar_gridding Lint
 on:
   push:
     branches:
@@ -16,17 +16,11 @@ permissions:
   pull-requests: read
 
 jobs:
-  test:
-    name: Test py${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        shell: bash -l {0}
+  lint:
+    name: Lint (Python${{ matrix.python-version }})
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        os: ["ubuntu-latest"]
-        # Bookend python versions
         python-version: ["3.14"]
     steps:
       - name: Harden Runner
@@ -35,7 +29,8 @@ jobs:
           disable-sudo: true
           egress-policy: audit
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Checkout Repository
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 1 # Fetch only current version
           persist-credentials: false
@@ -64,22 +59,18 @@ jobs:
 
       - name: Install glomar_gridding
         run: |
-          uv sync --group test
+          uv sync --group lint
 
       - name: Version info
         run: |
           uv pip list
 
-      - name: Import glomar_gridding toolbox
-        run: |
-          uv run python -c "import glomar_gridding"
-
-      - name: Run tests
+      - name: Run linters
         timeout-minutes: 10
-        run: uv run pytest test
-          --cov=glomar_gridding
-          --cov-report=xml
-          --junitxml=test-results/${{ runner.os }}-${{ matrix.python-version }}.xml
+        run: |
+          uv run ruff check glomar_gridding test
+          uv run numpydoc lint glomar_gridding/**.py
+          uv run codespell glomar_gridding test docs
 
       - name: Minimise uv cache
         run: uv cache prune --ci
