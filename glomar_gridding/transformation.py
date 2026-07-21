@@ -134,8 +134,7 @@ def dew_point_to_vapor_pressure(
     if dew_point_is_in_k:
         dew_point = dew_point - 273.15
     vapor_pressure = 611.21 * np.exp(
-        (17.502 * dew_point) /
-        (240.97 + dew_point)
+        (17.502 * dew_point) / (240.97 + dew_point)
     )
     return vapor_pressure
 
@@ -216,9 +215,10 @@ def vapor_pressure_to_specific_humidity(
     if use_mixing_ratio_approximation:
         return 1000.0 * gas_const_frac * vapor_pressure / air_pressure
     return (
-        1000.0 *
-        gas_const_frac * vapor_pressure /
-        (air_pressure - (1 - gas_const_frac) * vapor_pressure)
+        1000.0
+        * gas_const_frac
+        * vapor_pressure
+        / (air_pressure - (1 - gas_const_frac) * vapor_pressure)
     )
 
 
@@ -290,15 +290,12 @@ def dew_point_to_specific_humidity(
         Specific humidity or mixing ratio depending on the value of
         use_mixing_ratio_approximation. Units = g / kg
     """
-    return (
-        vapor_pressure_to_specific_humidity(
-            dew_point_to_vapor_pressure(
-                dew_point,
-                dew_point_is_in_k=dew_point_is_in_k
-            ),
-            air_pressure,
-            use_mixing_ratio_approximation=use_mixing_ratio_approximation,
-        )
+    return vapor_pressure_to_specific_humidity(
+        dew_point_to_vapor_pressure(
+            dew_point, dew_point_is_in_k=dew_point_is_in_k
+        ),
+        air_pressure,
+        use_mixing_ratio_approximation=use_mixing_ratio_approximation,
     )
 
 
@@ -335,13 +332,11 @@ def specific_humidity_to_dew_point(
         Dew point temperature, in K if output_in_k is True
         otherwise degree centigrade
     """
-    return (
-        vapor_pressure_to_dew_point(
-            specific_humidity_to_vapor_pressure(
-                specific_humidity,
-                air_pressure,
-                use_mixing_ratio_approximation=use_mixing_ratio_approximation,
-            ),
-            output_in_k=output_in_k,
-        )
+    return vapor_pressure_to_dew_point(
+        specific_humidity_to_vapor_pressure(
+            specific_humidity,
+            air_pressure,
+            use_mixing_ratio_approximation=use_mixing_ratio_approximation,
+        ),
+        output_in_k=output_in_k,
     )
