@@ -160,3 +160,43 @@ def test_se(model, thresh):
     assert gcv_diff < 1e-4
 
     assert np.allclose(py_se, r_se, atol=thresh)
+
+
+@pytest.mark.parametrize(
+    "model, thresh",
+    [
+        (ThinPlateSpline, 1e-3),
+        (SphericalThinPlateSpline, 5e-2),
+    ],
+)
+def test_se_zero_at_test_pts(model, thresh):
+    # TEST: SE is approximately 0 at training points if lambda = 0
+    #       Not expecting exact match - propagation of numerical/floating point
+    #       errors, but should be close.
+    np.random.seed(314159)
+    n_samps = 100
+
+    X_grid = np.mgrid[-0.5:0.5:25j, -1:1:50j]
+    X_test = X_grid.reshape(2, -1).T
+    X_test *= np.pi
+
+    n = X_test.shape[0]
+    idx = np.random.choice(np.arange(n), size=n_samps, replace=False)
+    X = X_test[idx, :]
+    y = 0.5 - (
+        np.sin(2 * X[:, 0])
+        + np.cos(2 * X[:, 1])
+        + 0.1 * np.random.randn(n_samps)
+    )
+
+    tps = model(X, y)
+    tps.fit(lam=0)
+
+    py_preds, py_se = tps.predict(X_test, compute_se=True)
+
+    assert np.allclose(py_preds[idx], y, atol=thresh), (
+        f"Diff of obs values {np.max(np.abs(y - py_preds[idx])) = }"
+    )
+    assert np.allclose(py_se[idx], np.zeros(n_samps), atol=1e-6), (
+        f"Non zero SE at obs: {np.max(np.abs(py_se[idx])) = }"
+    )
