@@ -81,7 +81,7 @@ def _gstools_ok(model, x, y, idx, obs, **kwargs):
 @pytest.mark.parametrize("model_name", list(MODELS))
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_ok_vs_gstools_noerr(model_name, seed):
-    "Test GMO Kriging output (value and uncertainty) against GStools"
+    """Test GMO Kriging output (value and uncertainty) against GStools"""
     _, x, y, model, cov, idx, obs = _setup(model_name, seed)
     est, var = _glomar_ok(cov, idx, obs)
     ref_est, ref_var = _gstools_ok(model, x, y, idx, obs, exact=True)
@@ -92,7 +92,7 @@ def test_ok_vs_gstools_noerr(model_name, seed):
 @pytest.mark.parametrize("model_name", list(MODELS))
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_ok_vs_gstools_err(model_name, seed):
-    "Test GMO Kriging output (value and uncertainty) against GStools with an uncorrelated observation uncertainty supplied"
+    """Test GMO Kriging output (value and uncertainty) against GStools with an uncorrelated observation uncertainty supplied"""
     rng, x, y, model, cov, idx, obs = _setup(model_name, seed)
     err_var = rng.uniform(0.05, 0.3, idx.size)
     est, var = _glomar_ok(cov, idx, obs, error_cov=np.diag(err_var))
@@ -107,7 +107,7 @@ def test_ok_vs_gstools_err(model_name, seed):
 # --------------------------------------------------------------------------
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_ok_vs_pykrige_noerr(seed):
-    "Test GMO Kriging output (value and uncertainty) against PyKrige"
+    """Test GMO Kriging output (value and uncertainty) against PyKrige"""
     pykrige_ok = pytest.importorskip("pykrige.ok")
     _, x, y, model, cov, idx, obs = _setup("exponential", seed)
     est, var = _glomar_ok(cov, idx, obs)
