@@ -726,14 +726,19 @@ class OrdinaryKriging(Kriging):
         obs_grid_cov = self.covariance[self.idx, :].copy()
         ones_m = np.ones((1, M), dtype=self.covariance.dtype)
         obs_grid_cov = np.concatenate((obs_grid_cov, ones_m), axis=0)
-
-        alpha = self.kriging_weights[:, -1]
         kriging_weights = self.kriging_weights @ obs_grid_cov
 
-        if full_covariance:
-            return self.covariance - kriging_weights - np.diag(alpha)
+        # NOTE: self.kriging_weights includes the Lagrange multiplier
+        # (alpha) as its final element, and obs_grid_cov has been
+        # extended by a row of ones. The product therefore already
+        # equals W @ C_cross + alpha 1^T, so the ordinary Kriging
+        # error covariance C - W @ C_cross - alpha 1^T is obtained
+        # without any further alpha term.
 
-        uncert_squared = np.diag(self.covariance - kriging_weights) - alpha
+        if full_covariance:
+            return self.covariance - kriging_weights
+
+        uncert_squared = np.diag(self.covariance - kriging_weights)
         uncert_squared = adjust_small_negative(uncert_squared)
         uncert = np.sqrt(uncert_squared)
         uncert[np.isnan(uncert)] = 0.0
@@ -1075,12 +1080,14 @@ def kriging_ordinary(
     obs_grid_cov = np.concatenate((obs_grid_cov, np.ones((1, M))), axis=0)
     grid_obs = np.append(grid_obs, 0)
 
+    # kriging_weights includes the Lagrange multiplier as its last elemen, so
+    # the product already contains the multiplier term.
+
     kriging_weights = np.linalg.solve(obs_obs_cov, obs_grid_cov).T
     kriged_result = kriging_weights @ grid_obs
 
-    alpha = kriging_weights[:, -1]
     kriging_weights = kriging_weights @ obs_grid_cov
-    uncert_squared = np.diag(interp_cov - kriging_weights) - alpha
+    uncert_squared = np.diag(interp_cov - kriging_weights)
     uncert_squared = adjust_small_negative(uncert_squared)
     uncert = np.sqrt(uncert_squared)
     uncert[np.isnan(uncert)] = 0.0
