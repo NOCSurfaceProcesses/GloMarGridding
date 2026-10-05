@@ -23,12 +23,12 @@ from warnings import warn
 import numpy as np
 import scipy as sp
 
+from glomar_gridding.covariance_tools import validate_covariance
 from glomar_gridding.kriging import (
     Kriging,
     _extended_inverse,
     adjust_small_negative,
 )
-from glomar_gridding.covariance_tools import validate_covariance
 
 
 class StochasticKriging(Kriging):
@@ -244,13 +244,19 @@ class StochasticKriging(Kriging):
         ones_m = np.ones((1, M), dtype=self.covariance.dtype)
         obs_grid_cov = np.concatenate((obs_grid_cov, ones_m), axis=0)
 
-        alpha = self.kriging_weights[:, -1]
+        # NOTE: self.kriging_weights includes the Lagrange multiplier
+        # (alpha) as its final element, and obs_grid_cov has been
+        # extended by a row of ones. The product therefore already
+        # equals W @ C_cross + alpha 1^T, so the ordinary Kriging
+        # error covariance C - W @ C_cross - alpha 1^T is obtained
+        # without any further alpha term.
+
         kriging_weights = self.kriging_weights @ obs_grid_cov
 
         if full_covariance:
-            return self.covariance - kriging_weights - np.diag(alpha)
+            return self.covariance - kriging_weights
 
-        uncert_squared = np.diag(self.covariance - kriging_weights) - alpha
+        uncert_squared = np.diag(self.covariance - kriging_weights)
         uncert_squared = adjust_small_negative(uncert_squared)
         uncert = np.sqrt(uncert_squared)
         uncert[np.isnan(uncert)] = 0.0
